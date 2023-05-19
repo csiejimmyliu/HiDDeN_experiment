@@ -23,7 +23,7 @@ class Hidden:
         :param tb_logger: Optional TensorboardX logger object, if specified -- enables Tensorboard logging
         """
         super(Hidden, self).__init__()
-        warm_up_iter = 3
+        warm_up_iter = 5
         lr_max = 1e-2
         lr_min = 1e-6
         self.encoder_decoder = EncoderDecoder(configuration, noiser).to(device)
