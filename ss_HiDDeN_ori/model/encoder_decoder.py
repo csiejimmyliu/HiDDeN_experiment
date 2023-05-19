@@ -3,7 +3,7 @@ from model.encoder import Encoder
 from model.decoder import Decoder
 from options import HiDDenConfiguration
 from noise_layers.noiser import Noiser
-import torch
+
 
 class EncoderDecoder(nn.Module):
     """
@@ -18,15 +18,11 @@ class EncoderDecoder(nn.Module):
         super(EncoderDecoder, self).__init__()
         self.encoder = Encoder(config)
         self.noiser = noiser
-        self.alpha=config.alpha
+
         self.decoder = Decoder(config)
 
     def forward(self, image, message):
-        #encoded_image = self.encoder(image, message)
-        watermark_noise=self.encoder(image, message)
-        watermark_noise=torch.tanh(watermark_noise)
-        encoded_image=image+self.alpha*watermark_noise
-        
+        encoded_image = self.encoder(image, message)
         noised_and_cover = self.noiser([encoded_image, image])
         noised_image = noised_and_cover[0]
         decoded_message = self.decoder(noised_image)

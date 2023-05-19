@@ -31,7 +31,6 @@ class HiDDenConfiguration():
                  decoder_loss: float,
                  encoder_loss: float,
                  adversarial_loss: float,
-                 alpha:float,
                  enable_fp16: bool = False):
         self.H = H
         self.W = W
@@ -48,5 +47,3 @@ class HiDDenConfiguration():
         self.encoder_loss = encoder_loss
         self.adversarial_loss = adversarial_loss
         self.enable_fp16 = enable_fp16
-        self.alpha=alpha
-

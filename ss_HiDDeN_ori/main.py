@@ -24,12 +24,12 @@ def main():
     new_run_parser.add_argument('--data-dir', '-d', required=True, type=str,
                                 help='The directory where the data is stored.')
     new_run_parser.add_argument('--batch-size', '-b', required=True, type=int, help='The batch size.')
-    new_run_parser.add_argument('--epochs', '-e', default=150, type=int, help='Number of epochs to run the simulation.')
+    new_run_parser.add_argument('--epochs', '-e', default=300, type=int, help='Number of epochs to run the simulation.')
     new_run_parser.add_argument('--name', required=True, type=str, help='The name of the experiment.')
 
-    new_run_parser.add_argument('--size', '-s', default=256, type=int,
+    new_run_parser.add_argument('--size', '-s', default=128, type=int,
                                 help='The size of the images (images are square so this is height and width).')
-    new_run_parser.add_argument('--message', '-m', default=48, type=int, help='The length in bits of the watermark.')
+    new_run_parser.add_argument('--message', '-m', default=30, type=int, help='The length in bits of the watermark.')
     new_run_parser.add_argument('--continue-from-folder', '-c', default='', type=str,
                                 help='The folder from where to continue a previous run. Leave blank if you are starting a new experiment.')
     # parser.add_argument('--tensorboard', dest='tensorboard', action='store_true',
@@ -98,8 +98,7 @@ def main():
                                             decoder_loss=1,
                                             encoder_loss=0.7,
                                             adversarial_loss=1e-3,
-                                            enable_fp16=args.enable_fp16,
-                                            alpha=0.3
+                                            enable_fp16=args.enable_fp16
                                             )
 
         this_run_folder = utils.create_folder_for_run(train_options.runs_folder, args.name)
@@ -124,7 +123,7 @@ def main():
         tb_logger = None
 
     noiser = Noiser(noise_config, device)
-    model = Hidden(hidden_config, device, noiser, tb_logger,train_options)
+    model = Hidden(hidden_config, device, noiser, tb_logger)
 
     if args.command == 'continue':
         # if we are continuing, we have to load the model params

@@ -14,39 +14,7 @@ import torch.nn.functional as F
 
 from options import HiDDenConfiguration, TrainingOptions
 from model.hidden import Hidden
-from skimage import color
 
-
-class ImageFolderInstance(datasets.ImageFolder):
-    """Folder datasets which returns the index of the image as well
-    """
-
-    def __init__(self, root, transform=None, target_transform=None):
-        super(ImageFolderInstance, self).__init__(root, transform, target_transform)
-
-
-
-    
-    def __getitem__(self, index: int):
-        """
-        Args:
-            index (int): Index
-
-        Returns:
-            tuple: (sample, target) where target is class_index of the target class.
-        """
-        path, target = self.samples[index]
-        sample = self.loader(path)
-
-
-        sample = sample.convert("YCbCr")
-
-        if self.transform is not None:
-            sample = self.transform(sample)
-        if self.target_transform is not None:
-            target = self.target_transform(target)
-
-        return sample, target
 
 def image_to_tensor(image):
     """
@@ -113,8 +81,8 @@ def save_checkpoint(model: Hidden, experiment_name: str, epoch: int, checkpoint_
     checkpoint = {
         'enc-dec-model': model.encoder_decoder.state_dict(),
         'enc-dec-optim': model.optimizer_enc_dec.state_dict(),
-        #'discrim-model': model.discriminator.state_dict(),
-        #'discrim-optim': model.optimizer_discrim.state_dict(),
+        'discrim-model': model.discriminator.state_dict(),
+        'discrim-optim': model.optimizer_discrim.state_dict(),
         'epoch': epoch
     }
     torch.save(checkpoint, checkpoint_filename)
@@ -134,8 +102,8 @@ def model_from_checkpoint(hidden_net, checkpoint):
     """ Restores the hidden_net object from a checkpoint object """
     hidden_net.encoder_decoder.load_state_dict(checkpoint['enc-dec-model'])
     hidden_net.optimizer_enc_dec.load_state_dict(checkpoint['enc-dec-optim'])
-    #hidden_net.discriminator.load_state_dict(checkpoint['discrim-model'])
-    #hidden_net.optimizer_discrim.load_state_dict(checkpoint['discrim-optim'])
+    hidden_net.discriminator.load_state_dict(checkpoint['discrim-model'])
+    hidden_net.optimizer_discrim.load_state_dict(checkpoint['discrim-optim'])
 
 
 def load_options(options_file_name) -> (TrainingOptions, HiDDenConfiguration, dict):
@@ -167,11 +135,11 @@ def get_data_loaders(hidden_config: HiDDenConfiguration, train_options: Training
         ])
     }
 
-    train_images = ImageFolderInstance(train_options.train_folder, data_transforms['train'])
+    train_images = datasets.ImageFolder(train_options.train_folder, data_transforms['train'])
     train_loader = torch.utils.data.DataLoader(train_images, batch_size=train_options.batch_size, shuffle=True,
                                                num_workers=4)
 
-    validation_images = ImageFolderInstance(train_options.validation_folder, data_transforms['test'])
+    validation_images = datasets.ImageFolder(train_options.validation_folder, data_transforms['test'])
     validation_loader = torch.utils.data.DataLoader(validation_images, batch_size=train_options.batch_size,
                                                     shuffle=False, num_workers=4)
 

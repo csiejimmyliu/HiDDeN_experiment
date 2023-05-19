@@ -1,2 +1,2 @@
-cp /home/master/10/jimmyliu/hidden_temp/hidden/dataset/coco/train/train_class/* ./dataset/train/train_class
-cp /home/master/10/jimmyliu/hidden_temp/hidden/dataset/coco/val/val_class/* ./dataset/val/val_class
+cp /home/master/10/jimmyliu/hidden_temp/hidden/dataset/coco/train/train_class/* ./dataset_10000/train/train_class
+cp /home/master/10/jimmyliu/hidden_temp/hidden/dataset/coco/val/val_class/* ./dataset_10000/val/val_class
