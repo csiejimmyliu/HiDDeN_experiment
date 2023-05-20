@@ -23,9 +23,10 @@ class Hidden:
         :param tb_logger: Optional TensorboardX logger object, if specified -- enables Tensorboard logging
         """
         super(Hidden, self).__init__()
-        warm_up_iter = 5
+        warm_up_iter = int(train_options.number_of_epochs*118320/(float(train_options.batch_size)*60.0))
         lr_max = 1e-2
         lr_min = 1e-6
+        T_max=int(train_options.number_of_epochs*118320/float(train_options.batch_size))
         self.encoder_decoder = EncoderDecoder(configuration, noiser).to(device)
         #self.discriminator = Discriminator(configuration).to(device)
         
@@ -34,8 +35,8 @@ class Hidden:
         #self.optimizer_enc_dec = torch.optim.Adam(self.encoder_decoder.parameters())
 
         lambda0 = lambda cur_iter: cur_iter / warm_up_iter if  cur_iter < warm_up_iter else \
-        (lr_min + 0.5*(lr_max-lr_min)*(1.0+math.cos( (cur_iter-warm_up_iter)/(train_options.number_of_epochs-warm_up_iter)*math.pi)))/0.1
-        self.scheduler=torch.optim.lr_scheduler.LambdaLR(self.optimizer_enc_dec, lr_lambda=lambda0,last_epoch=train_options.start_epoch-2)
+        (lr_min + 0.5*(lr_max-lr_min)*(1.0+math.cos( (cur_iter-warm_up_iter)/(T_max-warm_up_iter)*math.pi)))/0.1
+        self.scheduler=torch.optim.lr_scheduler.LambdaLR(self.optimizer_enc_dec, lr_lambda=lambda0,last_epoch=int((train_options.start_epoch-1)*118320/float(train_options.batch_size))-1)
 
         if configuration.use_vgg:
             self.vgg_loss = VGGLoss(3, 1, False)
