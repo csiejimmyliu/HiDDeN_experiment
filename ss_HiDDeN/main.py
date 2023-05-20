@@ -3,12 +3,12 @@ import pprint
 import argparse
 import torch
 import pickle
-import HiDDeN_experiment.ss_HiDDeN.utils_ori as utils_ori
+import utils
 import logging
 import sys
 
 from options import *
-from HiDDeN_experiment.ss_HiDDeN.model.hidden_old import Hidden
+from model.hidden import Hidden
 from noise_layers.noiser import Noiser
 from noise_argparser import NoiseArgParser
 
@@ -61,8 +61,8 @@ def main():
     if args.command == 'continue':
         this_run_folder = args.folder
         options_file = os.path.join(this_run_folder, 'options-and-config.pickle')
-        train_options, hidden_config, noise_config = utils_ori.load_options(options_file)
-        checkpoint, loaded_checkpoint_file_name = utils_ori.load_last_checkpoint(os.path.join(this_run_folder, 'checkpoints'))
+        train_options, hidden_config, noise_config = utils.load_options(options_file)
+        checkpoint, loaded_checkpoint_file_name = utils.load_last_checkpoint(os.path.join(this_run_folder, 'checkpoints'))
         train_options.start_epoch = checkpoint['epoch'] + 1
         if args.data_dir is not None:
             train_options.train_folder = os.path.join(args.data_dir, 'train')
@@ -102,7 +102,7 @@ def main():
                                             alpha=0.3
                                             )
 
-        this_run_folder = utils_ori.create_folder_for_run(train_options.runs_folder, args.name)
+        this_run_folder = utils.create_folder_for_run(train_options.runs_folder, args.name)
         with open(os.path.join(this_run_folder, 'options-and-config.pickle'), 'wb+') as f:
             pickle.dump(train_options, f)
             pickle.dump(noise_config, f)
@@ -130,7 +130,7 @@ def main():
         # if we are continuing, we have to load the model params
         assert checkpoint is not None
         logging.info(f'Loading checkpoint from file {loaded_checkpoint_file_name}')
-        utils_ori.model_from_checkpoint(model, checkpoint)
+        utils.model_from_checkpoint(model, checkpoint)
 
     logging.info('HiDDeN model: {}\n'.format(model.to_stirng()))
     logging.info('Model Configuration:\n')

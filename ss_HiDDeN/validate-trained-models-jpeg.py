@@ -5,10 +5,10 @@ import argparse
 import torch
 import numpy as np
 import pickle
-import HiDDeN_experiment.ss_HiDDeN.utils_ori as utils_ori
+import utils
 import csv
 
-from HiDDeN_experiment.ss_HiDDeN.model.hidden_old import Hidden
+from model.hidden import Hidden
 from noise_layers.noiser import Noiser
 from average_meter import AverageMeter
 from noise_argparser import NoiseArgParser
@@ -50,19 +50,19 @@ def main():
         current_run = os.path.join(args.runs_root, run_name)
         print(f'Run folder: {current_run}')
         options_file = os.path.join(current_run, 'options-and-config.pickle')
-        train_options, hidden_config, _ = utils_ori.load_options(options_file)
+        train_options, hidden_config, _ = utils.load_options(options_file)
         train_options.train_folder = os.path.join(args.data_dir, 'val')
         train_options.validation_folder = os.path.join(args.data_dir, 'val')
         train_options.batch_size = args.batch_size
-        checkpoint, chpt_file_name = utils_ori.load_last_checkpoint(os.path.join(current_run, 'checkpoints'))
+        checkpoint, chpt_file_name = utils.load_last_checkpoint(os.path.join(current_run, 'checkpoints'))
         print(f'Loaded checkpoint from file {chpt_file_name}')
 
         noiser = Noiser(noise_config,device)
         model = Hidden(hidden_config, device, noiser, tb_logger=None)
-        utils_ori.model_from_checkpoint(model, checkpoint)
+        utils.model_from_checkpoint(model, checkpoint)
 
         print('Model loaded successfully. Starting validation run...')
-        _, val_data = utils_ori.get_data_loaders(hidden_config, train_options)
+        _, val_data = utils.get_data_loaders(hidden_config, train_options)
         file_count = len(val_data.dataset)
         if file_count % train_options.batch_size == 0:
             steps_in_epoch = file_count // train_options.batch_size
@@ -84,7 +84,7 @@ def main():
                 losses_accu[name].update(loss)
             if step % print_each == 0 or step == steps_in_epoch:
                 print(f'Step {step}/{steps_in_epoch}')
-                utils_ori.print_progress(losses_accu)
+                utils.print_progress(losses_accu)
                 print('-' * 40)
 
         # utils.print_progress(losses_accu)
