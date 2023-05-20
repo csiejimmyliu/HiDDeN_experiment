@@ -5,8 +5,8 @@ import os
 import numpy as np
 from options import HiDDenConfiguration
 
-import utils
-from model.hidden import *
+import HiDDeN_experiment.ss_HiDDeN.utils_ori as utils_ori
+from HiDDeN_experiment.ss_HiDDeN.model.hidden_old import *
 from noise_layers.noiser import Noiser
 from PIL import Image
 import torchvision.transforms.functional as TF
@@ -41,13 +41,13 @@ def main():
 
     args = parser.parse_args()
 
-    train_options, hidden_config, noise_config = utils.load_options(args.options_file)
+    train_options, hidden_config, noise_config = utils_ori.load_options(args.options_file)
     
     noiser = Noiser(args.noise,device)
 
     checkpoint = torch.load(args.checkpoint_file)
     hidden_net = Hidden(hidden_config, device, noiser, None)
-    utils.model_from_checkpoint(hidden_net, checkpoint)
+    utils_ori.model_from_checkpoint(hidden_net, checkpoint)
 
 
     image_pil = Image.open(args.source_image)
@@ -65,7 +65,7 @@ def main():
     print('original: {}'.format(message_detached))
     print('decoded : {}'.format(decoded_rounded))
     print('error : {:.3f}'.format(np.mean(np.abs(decoded_rounded - message_detached))))
-    utils.save_images(image_tensor.cpu(), encoded_images.cpu(), 'test', '.', resize_to=(256, 256))
+    utils_ori.save_images(image_tensor.cpu(), encoded_images.cpu(), 'test', '.', resize_to=(256, 256))
 
     # bitwise_avg_err = np.sum(np.abs(decoded_rounded - message.detach().cpu().numpy()))/(image_tensor.shape[0] * messages.shape[1])
 
