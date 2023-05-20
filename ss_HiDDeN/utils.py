@@ -16,6 +16,46 @@ from options import HiDDenConfiguration, TrainingOptions
 from model.hidden import Hidden
 from skimage import color
 
+from typing import Any, BinaryIO, List, Optional, Tuple, Union
+import pathlib
+from torchvision.utils import _log_api_usage_once,make_grid
+from PIL import Image
+
+
+def ycbcr2rgb(im):
+    xform = np.array([[1, 0, 1.402], [1, -0.34414, -.71414], [1, 1.772, 0]])
+    rgb = im
+    rgb[:,:,[1,2]] -= 128
+    rgb = rgb.dot(xform.T)
+    np.putmask(rgb, rgb > 255, 255)
+    np.putmask(rgb, rgb < 0, 0)
+    return np.uint8(rgb)
+
+def save_ycbcr_img(    tensor: Union[torch.Tensor, List[torch.Tensor]],
+    fp: Union[str, pathlib.Path, BinaryIO],
+    format: Optional[str] = None,
+    **kwargs,
+) -> None:
+    """
+    Save a given Tensor into an image file.
+
+    Args:
+        tensor (Tensor or list): Image to be saved. If given a mini-batch tensor,
+            saves the tensor as a grid of images by calling ``make_grid``.
+        fp (string or file object): A filename or a file object
+        format(Optional):  If omitted, the format to use is determined from the filename extension.
+            If a file object was used instead of a filename, this parameter should always be used.
+        **kwargs: Other arguments are documented in ``make_grid``.
+    """
+
+    if not torch.jit.is_scripting() and not torch.jit.is_tracing():
+        _log_api_usage_once(save_ycbcr_img)
+    grid = make_grid(tensor, **kwargs)
+    # Add 0.5 after unnormalizing to [0, 255] to round to nearest integer
+    ndarr = grid.mul(255).add_(0.5).permute(1, 2, 0).to("cpu").numpy()
+    ndarr=ycbcr2rgb(ndarr)
+    im = Image.fromarray(ndarr)
+    im.save(fp, format=format)
 
 class ImageFolderInstance(datasets.ImageFolder):
     """Folder datasets which returns the index of the image as well
@@ -37,8 +77,7 @@ class ImageFolderInstance(datasets.ImageFolder):
         """
         path, target = self.samples[index]
         sample = self.loader(path)
-
-
+        
         sample = sample.convert("YCbCr")
 
         if self.transform is not None:
@@ -86,8 +125,9 @@ def save_images(original_images, watermarked_images, epoch, folder, resize_to=No
 
     stacked_images = torch.cat([images, watermarked_images], dim=0)
     filename = os.path.join(folder, 'epoch-{}.png'.format(epoch))
-    torchvision.utils.save_image(stacked_images, filename)
-
+    #torchvision.utils.save_image(stacked_images, filename)
+    save_ycbcr_img(stacked_images, filename)
+    
 
 def sorted_nicely(l):
     """ Sort the given iterable in the way that humans expect."""

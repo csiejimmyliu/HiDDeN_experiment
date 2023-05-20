@@ -110,7 +110,7 @@ class Hidden:
                 vgg_on_enc = self.vgg_loss(encoded_images)
                 g_loss_enc = self.mse_loss(vgg_on_cov, vgg_on_enc)
             '''
-            g_loss_dec = self.mse_loss(decoded_messages, messages)
+            g_loss_dec = self.bce_with_logits_loss(decoded_messages, messages)
             g_loss = g_loss_dec
 
             g_loss.backward()
@@ -176,7 +176,7 @@ class Hidden:
                 vgg_on_enc = self.vgg_loss(encoded_images)
                 g_loss_enc = self.mse_loss(vgg_on_cov, vgg_on_enc)
             '''
-            g_loss_dec = self.mse_loss(decoded_messages, messages)
+            g_loss_dec = self.bce_with_logits_loss(decoded_messages, messages)
             g_loss = g_loss_dec
 
         decoded_rounded = decoded_messages.detach().cpu().numpy().round().clip(0, 1)
