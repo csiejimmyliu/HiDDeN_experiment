@@ -40,6 +40,7 @@ def main():
 
     completed_runs = [o for o in os.listdir(args.runs_root)
                       if os.path.isdir(os.path.join(args.runs_root, o)) and o != 'no-noise-defaults']
+    
     completed_runs=sorted(completed_runs)
     print(completed_runs)
     noise_config = args.noise if args.noise is not None else []

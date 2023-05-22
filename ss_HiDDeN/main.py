@@ -41,7 +41,8 @@ def main():
 
     new_run_parser.add_argument('--noise', nargs='*', action=NoiseArgParser,
                                 help="Noise layers configuration. Use quotes when specifying configuration, e.g. 'cropout((0.55, 0.6), (0.55, 0.6))'")
-
+    new_run_parser.add_argument('--loss_type', '-l', default='mse', type=str, help='The loss used between cover and waterkmarked image.')
+    new_run_parser.add_argument('--opt_type', '-o', default='adam', type=str, help='The loss used between cover and waterkmarked image.')
     new_run_parser.set_defaults(tensorboard=False)
     new_run_parser.set_defaults(enable_fp16=False)
 
@@ -99,7 +100,9 @@ def main():
                                             encoder_loss=0.7,
                                             adversarial_loss=1e-3,
                                             enable_fp16=args.enable_fp16,
-                                            alpha=0.3
+                                            alpha=0.3,
+                                            loss_type=args.loss_type,
+                                            opt_type=args.opt_type
                                             )
 
         this_run_folder = utils.create_folder_for_run(train_options.runs_folder, args.name)

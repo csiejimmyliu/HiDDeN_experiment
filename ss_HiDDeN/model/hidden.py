@@ -31,12 +31,17 @@ class Hidden:
         #self.discriminator = Discriminator(configuration).to(device)
         
         #self.optimizer_discrim = torch.optim.Adam(self.discriminator.parameters())
-        self.optimizer_enc_dec = Lamb(self.encoder_decoder.parameters())
-        #self.optimizer_enc_dec = torch.optim.Adam(self.encoder_decoder.parameters())
+        if configuration.opt_type=="adam":
+            self.optimizer_enc_dec = torch.optim.Adam(self.encoder_decoder.parameters())
+        else:
+            self.optimizer_enc_dec = Lamb(self.encoder_decoder.parameters())
+        
 
         lambda0 = lambda cur_iter: cur_iter / warm_up_iter if  cur_iter < warm_up_iter else \
         (lr_min + 0.5*(lr_max-lr_min)*(1.0+math.cos( (cur_iter-warm_up_iter)/(T_max-warm_up_iter)*math.pi)))/0.1
-        self.scheduler=torch.optim.lr_scheduler.LambdaLR(self.optimizer_enc_dec, lr_lambda=lambda0,last_epoch=int((train_options.start_epoch-1)*118320/float(train_options.batch_size))-1)
+        self.scheduler=torch.optim.lr_scheduler.LambdaLR(self.optimizer_enc_dec, lr_lambda=lambda0)
+        self.scheduler.last_epoch=int((train_options.start_epoch-1)*118320/float(train_options.batch_size))-1
+
 
         if configuration.use_vgg:
             self.vgg_loss = VGGLoss(3, 1, False)
@@ -47,9 +52,15 @@ class Hidden:
         self.config = configuration
         self.device = device
 
+
         self.bce_with_logits_loss = nn.BCEWithLogitsLoss().to(device)
         self.mse_loss = nn.MSELoss().to(device)
+        
 
+        if configuration.loss_type=="mse":
+            self.message_loss=self.mse_loss
+        else:
+            self.message_loss=self.bce_with_logits_loss
         # Defined the labels used for training the discriminator/adversarial loss
         self.cover_label = 1
         self.encoded_label = 0
@@ -102,16 +113,16 @@ class Hidden:
             #d_on_encoded_for_enc = self.discriminator(encoded_images)
             #g_loss_adv = self.bce_with_logits_loss(d_on_encoded_for_enc, g_target_label_encoded)
 
-            '''
+            
             if self.vgg_loss == None:
                 g_loss_enc = self.mse_loss(encoded_images, images)
             else:
                 vgg_on_cov = self.vgg_loss(images)
                 vgg_on_enc = self.vgg_loss(encoded_images)
                 g_loss_enc = self.mse_loss(vgg_on_cov, vgg_on_enc)
-            '''
-            g_loss_dec = self.bce_with_logits_loss(decoded_messages, messages)
-            g_loss = g_loss_dec
+            
+            g_loss_dec = self.message_loss(decoded_messages, messages)
+            g_loss =  self.config.encoder_loss * g_loss_enc + self.config.decoder_loss * g_loss_dec
 
             g_loss.backward()
             self.optimizer_enc_dec.step()
@@ -123,7 +134,7 @@ class Hidden:
 
         losses = {
             'loss           ': g_loss.item(),
-            #'encoder_mse    ': g_loss_enc.item(),
+            'encoder_mse    ': g_loss_enc.item(),
             'dec_mse        ': g_loss_dec.item(),
             'bitwise-error  ': bitwise_avg_err,
             #'adversarial_bce': g_loss_adv.item(),
@@ -168,16 +179,16 @@ class Hidden:
 
             #d_on_encoded_for_enc = self.discriminator(encoded_images)
             #g_loss_adv = self.bce_with_logits_loss(d_on_encoded_for_enc, g_target_label_encoded)
-            '''
+            
             if self.vgg_loss is None:
                 g_loss_enc = self.mse_loss(encoded_images, images)
             else:
                 vgg_on_cov = self.vgg_loss(images)
                 vgg_on_enc = self.vgg_loss(encoded_images)
                 g_loss_enc = self.mse_loss(vgg_on_cov, vgg_on_enc)
-            '''
-            g_loss_dec = self.bce_with_logits_loss(decoded_messages, messages)
-            g_loss = g_loss_dec
+            
+            g_loss_dec = self.message_loss(decoded_messages, messages)
+            g_loss =  self.config.encoder_loss * g_loss_enc + self.config.decoder_loss * g_loss_dec
 
         decoded_rounded = decoded_messages.detach().cpu().numpy().round().clip(0, 1)
         bitwise_avg_err = np.sum(np.abs(decoded_rounded - messages.detach().cpu().numpy())) / (
@@ -185,7 +196,7 @@ class Hidden:
 
         losses = {
             'loss           ': g_loss.item(),
-            #'encoder_mse    ': g_loss_enc.item(),
+            'encoder_mse    ': g_loss_enc.item(),
             'dec_mse        ': g_loss_dec.item(),
             'bitwise-error  ': bitwise_avg_err,
             #'adversarial_bce': g_loss_adv.item(),
