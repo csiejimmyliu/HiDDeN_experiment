@@ -172,6 +172,14 @@ def load_last_checkpoint(checkpoint_folder):
     return checkpoint, last_checkpoint_file
 
 
+def load_checkpoint(checkpoint_path):
+    """ Load the last checkpoint from the given folder """
+    last_checkpoint_file = checkpoint_path
+    checkpoint = torch.load(last_checkpoint_file)
+
+    return checkpoint, last_checkpoint_file
+
+
 def model_from_checkpoint(hidden_net, checkpoint):
     """ Restores the hidden_net object from a checkpoint object """
     hidden_net.encoder_decoder.load_state_dict(checkpoint['enc-dec-model'])
