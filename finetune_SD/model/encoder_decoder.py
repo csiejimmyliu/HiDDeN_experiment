@@ -29,6 +29,8 @@ class EncoderDecoder(nn.Module):
         self.noiser = noiser
         self.alpha=config.alpha
         self.decoder = Decoder(config)
+        self.encoder.encoder.requires_grad_(False)
+        self.encoder.quant_conv.requires_grad_(False)
 
     def forward(self, image, message):
         #encoded_image = self.encoder(image, message)

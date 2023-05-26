@@ -46,10 +46,12 @@ def train(model: Hidden,
     message=fix_message.repeat(train_options.batch_size,1,1,1).to(device)
 
     for epoch in range(train_options.start_epoch, train_options.number_of_epochs + 1):
+        epoch_start = time.time()
+        '''
         logging.info('\nStarting epoch {}/{}'.format(epoch, train_options.number_of_epochs))
         logging.info('Batch size = {}\nSteps in epoch = {}'.format(train_options.batch_size, steps_in_epoch))
         training_losses = defaultdict(AverageMeter)
-        epoch_start = time.time()
+        
         step = 1
         for image, _ in train_data:
             image = image.to(device)
@@ -73,9 +75,11 @@ def train(model: Hidden,
             tb_logger.save_losses(training_losses, epoch)
             tb_logger.save_grads(epoch)
             tb_logger.save_tensors(epoch)
+            '''
         first_iteration = True
         validation_losses = defaultdict(AverageMeter)
         logging.info('Running validation for epoch {}/{}'.format(epoch, train_options.number_of_epochs))
+        
         for image, _ in val_data:
             image = image.to(device)
             message = torch.Tensor(np.random.choice([0, 1], (image.shape[0], hidden_config.message_length))).to(device)

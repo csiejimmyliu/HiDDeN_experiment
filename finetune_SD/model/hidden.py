@@ -31,14 +31,16 @@ class Hidden:
         #self.discriminator = Discriminator(configuration).to(device)
         
         #self.optimizer_discrim = torch.optim.Adam(self.discriminator.parameters())
+
+
         if configuration.opt_type=="adam":
-            self.optimizer_enc_dec = torch.optim.Adam(self.encoder_decoder.parameters())
+            self.optimizer_enc_dec = torch.optim.Adam(filter(lambda p: p.requires_grad, self.encoder_decoder.parameters()))
         else:
-            self.optimizer_enc_dec = Lamb(self.encoder_decoder.parameters())
+            self.optimizer_enc_dec = Lamb(filter(lambda p: p.requires_grad, self.encoder_decoder.parameters()))
         
 
         lambda0 = lambda cur_iter: cur_iter / warm_up_iter if  cur_iter < warm_up_iter else \
-        (lr_min + 0.5*(lr_max-lr_min)*(1.0+math.cos( (cur_iter-warm_up_iter)/(T_max-warm_up_iter)*math.pi)))/0.1
+        (lr_min + 0.5*(lr_max-lr_min)*(1.0+math.cos( (cur_iter-warm_up_iter)/(T_max-warm_up_iter)*math.pi)))/lr_max
         self.scheduler=torch.optim.lr_scheduler.LambdaLR(self.optimizer_enc_dec, lr_lambda=lambda0)
         self.scheduler.last_epoch=int((train_options.start_epoch-1)*118320/float(train_options.batch_size))-1
 
