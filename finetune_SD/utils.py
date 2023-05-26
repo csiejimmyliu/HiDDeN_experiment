@@ -21,6 +21,8 @@ import pathlib
 from torchvision.utils import _log_api_usage_once,make_grid
 from PIL import Image
 
+import torch.utils.data as data
+
 
 def ycbcr2rgb(im):
     xform = np.array([[1, 0, 1.402], [1, -0.34414, -.71414], [1, 1.772, 0]])
@@ -77,7 +79,8 @@ class ImageFolderInstance(datasets.ImageFolder):
         Returns:
             tuple: (sample, target) where target is class_index of the target class.
         """
-        print('sample indexxxxxxxxxx',len(self.samples[index]))
+        #print('sample indexxxxxxxxxx',len(self.samples[index]))
+
         path, target = self.samples[index]
         sample = self.loader(path)
         
@@ -219,12 +222,12 @@ def get_data_loaders(hidden_config: HiDDenConfiguration, train_options: Training
     }
 
     train_images = ImageFolderInstance(train_options.train_folder, data_transforms['train'])
-    print(len(train_images))
+    train_images=data.Subset(train_images, range(hidden_config.data_len))
     train_loader = torch.utils.data.DataLoader(train_images, batch_size=train_options.batch_size, shuffle=True,
                                                num_workers=4)
 
-    validation_images = datasets.ImageFolder(train_options.validation_folder, data_transforms['test'])
-    validation_images=validation_images[:int(hidden_config.data_len/5.0)]
+    validation_images = ImageFolderInstance(train_options.validation_folder, data_transforms['test'])
+    validation_images=data.Subset(validation_images, range(int(hidden_config.data_len/5.0)))
     validation_loader = torch.utils.data.DataLoader(validation_images, batch_size=train_options.batch_size,
                                                     shuffle=False, num_workers=4)
 

@@ -43,7 +43,7 @@ def train(model: Hidden,
     fix_message = torch.Tensor(np.random.choice([0, 1], ( hidden_config.message_length)))
     logging.info('\nFix message:  {}'.format(fix_message))
 
-    message=fix_message.repeat(train_options.batch_size,1,1,1).to(device)
+    message=fix_message.repeat(train_options.batch_size,1).to(device)
 
     for epoch in range(train_options.start_epoch, train_options.number_of_epochs + 1):
         epoch_start = time.time()
@@ -55,7 +55,6 @@ def train(model: Hidden,
         step = 1
         for image, _ in train_data:
             image = image.to(device)
-            
             losses, _ = model.train_on_batch([image, message])
 
             for name, loss in losses.items():
