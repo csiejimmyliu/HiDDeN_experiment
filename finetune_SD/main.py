@@ -24,7 +24,7 @@ def main():
     new_run_parser.add_argument('--data-dir', '-d', required=True, type=str,
                                 help='The directory where the data is stored.')
     new_run_parser.add_argument('--batch-size', '-b', required=True, type=int, help='The batch size.')
-    new_run_parser.add_argument('--epochs', '-e', default=150, type=int, help='Number of epochs to run the simulation.')
+    new_run_parser.add_argument('--epochs', '-e', default=1, type=int, help='Number of epochs to run the simulation.')
     new_run_parser.add_argument('--name', required=True, type=str, help='The name of the experiment.')
 
     new_run_parser.add_argument('--size', '-s', default=256, type=int,
@@ -43,6 +43,7 @@ def main():
                                 help="Noise layers configuration. Use quotes when specifying configuration, e.g. 'cropout((0.55, 0.6), (0.55, 0.6))'")
     new_run_parser.add_argument('--loss_type', '-l', default='mse', type=str, help='The loss used between cover and waterkmarked image.')
     new_run_parser.add_argument('--opt_type', '-o', default='adam', type=str, help='The loss used between cover and waterkmarked image.')
+    new_run_parser.add_argument('--data_len', default=400, type=int, help='Training data lens')
     new_run_parser.set_defaults(tensorboard=False)
     new_run_parser.set_defaults(enable_fp16=False)
 
@@ -102,7 +103,8 @@ def main():
                                             enable_fp16=args.enable_fp16,
                                             alpha=0.3,
                                             loss_type=args.loss_type,
-                                            opt_type=args.opt_type
+                                            opt_type=args.opt_type,
+                                            data_len=args.data_len
                                             )
 
         this_run_folder = utils.create_folder_for_run(train_options.runs_folder, args.name)

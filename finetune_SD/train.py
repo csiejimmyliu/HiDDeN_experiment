@@ -47,7 +47,7 @@ def train(model: Hidden,
 
     for epoch in range(train_options.start_epoch, train_options.number_of_epochs + 1):
         epoch_start = time.time()
-        '''
+        
         logging.info('\nStarting epoch {}/{}'.format(epoch, train_options.number_of_epochs))
         logging.info('Batch size = {}\nSteps in epoch = {}'.format(train_options.batch_size, steps_in_epoch))
         training_losses = defaultdict(AverageMeter)
@@ -75,7 +75,7 @@ def train(model: Hidden,
             tb_logger.save_losses(training_losses, epoch)
             tb_logger.save_grads(epoch)
             tb_logger.save_tensors(epoch)
-            '''
+        
         first_iteration = True
         validation_losses = defaultdict(AverageMeter)
         logging.info('Running validation for epoch {}/{}'.format(epoch, train_options.number_of_epochs))
