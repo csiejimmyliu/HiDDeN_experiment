@@ -163,6 +163,7 @@ def save_checkpoint(model: Hidden, experiment_name: str, epoch: int, checkpoint_
         'epoch': epoch
     }
     torch.save(checkpoint, checkpoint_filename)
+    model.encoder_decoder.encoder.save_pretrained(os.path.join(checkpoint_folder, 'vae_{epoch}'))
     logging.info('Saving checkpoint done.')
 
 
