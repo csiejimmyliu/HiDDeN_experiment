@@ -29,8 +29,26 @@ class EncoderDecoder(nn.Module):
         self.noiser = noiser
         self.alpha=config.alpha
         self.decoder = Decoder(config)
+        '''
         self.encoder.encoder.requires_grad_(False)
         self.encoder.quant_conv.requires_grad_(False)
+        self.decoder.requires_grad_(False)
+        '''
+        '''
+        for name, param in self.encoder.decoder.named_parameters():
+            if 'norm' in name:
+                param.requires_grad=False
+        '''
+        '''
+        for module in self.encoder.modules():
+            # print(module)
+            if isinstance(module, nn.GroupNorm):
+                if hasattr(module, 'weight'):
+                    module.weight.requires_grad_(False)
+                if hasattr(module, 'bias'):
+                    module.bias.requires_grad_(False)
+                module.eval()
+        '''
 
     def forward(self, image, message):
         #encoded_image = self.encoder(image, message)

@@ -190,6 +190,14 @@ def model_from_checkpoint(hidden_net, checkpoint):
     #hidden_net.discriminator.load_state_dict(checkpoint['discrim-model'])
     #hidden_net.optimizer_discrim.load_state_dict(checkpoint['discrim-optim'])
 
+def load_wm_decoder(hidden_net, checkpoint):
+    """ Restores the hidden_net object from a checkpoint object """
+    decoder_dict=hidden_net.encoder_decoder.decoder.state_dict()
+    pretrained_dict = {k[8:]: v for k, v in checkpoint['enc-dec-model'].items() if (k[8:] in decoder_dict and 'encoder' not in k)}
+    hidden_net.encoder_decoder.decoder.load_state_dict(pretrained_dict)
+    #hidden_net.optimizer_enc_dec.load_state_dict(checkpoint['enc-dec-optim'])
+    #hidden_net.discriminator.load_state_dict(checkpoint['discrim-model'])
+    #hidden_net.optimizer_discrim.load_state_dict(checkpoint['discrim-optim'])
 
 def load_options(options_file_name) -> (TrainingOptions, HiDDenConfiguration, dict):
     """ Loads the training, model, and noise configurations from the given folder """

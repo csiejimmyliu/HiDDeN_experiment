@@ -40,11 +40,14 @@ def train(model: Hidden,
     images_to_save = 8
     saved_images_size = (512, 512)
 
-    fix_message = torch.Tensor(np.random.choice([0, 1], ( hidden_config.message_length)))
+    #fix_message = torch.Tensor(np.random.choice([0, 1], ( hidden_config.message_length)))
+    fix_message=torch.Tensor([1., 1., 1., 0., 1., 1., 1., 0., 0., 0., 0., 0., 0., 0., 1., 1., 0., 0.,                                                                                                                                                                                                   
+        1., 1., 0., 1., 0., 1., 1., 0., 1., 0., 0., 1., 1., 1., 0., 1., 1., 1.,                                                                                                                                                                                                                 
+        0., 1., 1., 1., 1., 1., 1., 1., 1., 1., 0., 0.])
     logging.info('\nFix message:  {}'.format(fix_message))
 
     message=fix_message.repeat(train_options.batch_size,1).to(device)
-
+   
     for epoch in range(train_options.start_epoch, train_options.number_of_epochs + 1):
         epoch_start = time.time()
         
@@ -81,7 +84,7 @@ def train(model: Hidden,
         
         for image, _ in val_data:
             image = image.to(device)
-            message = torch.Tensor(np.random.choice([0, 1], (image.shape[0], hidden_config.message_length))).to(device)
+            
             losses, (encoded_images, noised_images, decoded_messages) = model.validate_on_batch([image, message])
             for name, loss in losses.items():
                 validation_losses[name].update(loss)

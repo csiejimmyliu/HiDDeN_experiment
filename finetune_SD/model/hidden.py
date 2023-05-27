@@ -32,11 +32,30 @@ class Hidden:
         
         #self.optimizer_discrim = torch.optim.Adam(self.discriminator.parameters())
 
+        self.encoder_decoder.eval()
+        self.encoder_decoder.encoder.encoder.requires_grad_(False)
+        self.encoder_decoder.encoder.quant_conv.requires_grad_(False)
+        self.encoder_decoder.decoder.requires_grad_(False)
+        
+        for module in self.encoder_decoder.encoder.modules():
+            # print(module)
+            if isinstance(module, nn.GroupNorm):
+                if hasattr(module, 'weight'):
+                    module.weight.requires_grad_(False)
+                if hasattr(module, 'bias'):
+                    module.bias.requires_grad_(False)
+                #module.eval()
+        
+
+        
+        
+
+
 
         if configuration.opt_type=="adam":
-            self.optimizer_enc_dec = torch.optim.Adam(filter(lambda p: p.requires_grad, self.encoder_decoder.parameters()))
+            self.optimizer_enc_dec = torch.optim.Adam(filter(lambda p: p.requires_grad, self.encoder_decoder.encoder.parameters()))
         else:
-            self.optimizer_enc_dec = Lamb(filter(lambda p: p.requires_grad, self.encoder_decoder.parameters()))
+            self.optimizer_enc_dec = Lamb(filter(lambda p: p.requires_grad, self.encoder_decoder.encoder.parameters()))
         
 
         lambda0 = lambda cur_iter: cur_iter / warm_up_iter if  cur_iter < warm_up_iter else \
@@ -72,8 +91,8 @@ class Hidden:
             from tensorboard_logger import TensorBoardLogger
             #encoder_final = self.encoder_decoder.encoder._modules['final_layer']
             #encoder_final.weight.register_hook(tb_logger.grad_hook_by_name('grads/encoder_out'))
-            decoder_final = self.encoder_decoder.decoder._modules['linear']
-            decoder_final.weight.register_hook(tb_logger.grad_hook_by_name('grads/decoder_out'))
+            #decoder_final = self.encoder_decoder.decoder._modules['linear']
+            #decoder_final.weight.register_hook(tb_logger.grad_hook_by_name('grads/decoder_out'))
             #discrim_final = self.discriminator._modules['linear']
             #discrim_final.weight.register_hook(tb_logger.grad_hook_by_name('grads/discrim_out'))
 
@@ -87,50 +106,89 @@ class Hidden:
         images, messages = batch
 
         batch_size = images.shape[0]
-        self.encoder_decoder.train()
-        self.encoder_decoder.encoder.encoder.requires_grad_(False)
-        self.encoder_decoder.encoder.quant_conv.requires_grad_(False)
+        self.encoder_decoder.eval()
+        self.encoder_decoder.encoder.decoder.train()
+        #self.encoder_decoder.encoder.encoder.requires_grad_(False)
+        #self.encoder_decoder.encoder.quant_conv.requires_grad_(False)
+
+
+        #self.encoder_decoder.decoder.eval()
+        for module in self.encoder_decoder.encoder.modules():
+            # print(module)
+            if isinstance(module, nn.GroupNorm):
+                if hasattr(module, 'weight'):
+                    module.weight.requires_grad_(False)
+                if hasattr(module, 'bias'):
+                    module.bias.requires_grad_(False)
+                module.eval()
+        
+        for module in self.encoder_decoder.encoder.modules():
+            # print(module)
+            if isinstance(module, nn.Dropout):
+                module.eval()
+                
+
+        '''
+        for name, param in self.encoder_decoder.encoder.decoder.named_parameters():
+            
+            if param.requires_grad==False:
+                print(name)
+        
+        raise NotImplementedError
+        '''
         #self.discriminator.train()
-        with torch.enable_grad():
-            # ---------------- Train the discriminator -----------------------------
-            #self.optimizer_discrim.zero_grad()
-            # train on cover
-            #d_target_label_cover = torch.full((batch_size, 1), self.cover_label, device=self.device,dtype=torch.float32)
-            #d_target_label_encoded = torch.full((batch_size, 1), self.encoded_label, device=self.device,dtype=torch.float32)
-            #g_target_label_encoded = torch.full((batch_size, 1), self.cover_label, device=self.device,dtype=torch.float32)
+        #with torch.enable_grad():
+        # ---------------- Train the discriminator -----------------------------
+        #self.optimizer_discrim.zero_grad()
+        # train on cover
+        #d_target_label_cover = torch.full((batch_size, 1), self.cover_label, device=self.device,dtype=torch.float32)
+        #d_target_label_encoded = torch.full((batch_size, 1), self.encoded_label, device=self.device,dtype=torch.float32)
+        #g_target_label_encoded = torch.full((batch_size, 1), self.cover_label, device=self.device,dtype=torch.float32)
 
-            #d_on_cover = self.discriminator(images)
-            #d_loss_on_cover = self.bce_with_logits_loss(d_on_cover, d_target_label_cover)
-            #d_loss_on_cover.backward()
+        #d_on_cover = self.discriminator(images)
+        #d_loss_on_cover = self.bce_with_logits_loss(d_on_cover, d_target_label_cover)
+        #d_loss_on_cover.backward()
 
-            # train on fake
-            encoded_images, noised_images, decoded_messages = self.encoder_decoder(images, messages)
-            #d_on_encoded = self.discriminator(encoded_images.detach())
-            #d_loss_on_encoded = self.bce_with_logits_loss(d_on_encoded, d_target_label_encoded)
+        
+        # train on fake
+        encoded_images, noised_images, decoded_messages = self.encoder_decoder(images, messages)
+        '''
+        for name, param in self.encoder_decoder.encoder.encoder.named_parameters():
+            if param.requires_grad==True:
+                
+                print('encoder',name)
 
-            #d_loss_on_encoded.backward()
-            #self.optimizer_discrim.step()
+        for name, param in self.encoder_decoder.encoder.decoder.named_parameters():
+            if param.requires_grad==True:
+                print('decoder',name)
+        '''
+        
+        #d_on_encoded = self.discriminator(encoded_images.detach())
+        #d_loss_on_encoded = self.bce_with_logits_loss(d_on_encoded, d_target_label_encoded)
 
-            # --------------Train the generator (encoder-decoder) ---------------------
-            self.optimizer_enc_dec.zero_grad()
-            # target label for encoded images should be 'cover', because we want to fool the discriminator
-            #d_on_encoded_for_enc = self.discriminator(encoded_images)
-            #g_loss_adv = self.bce_with_logits_loss(d_on_encoded_for_enc, g_target_label_encoded)
+        #d_loss_on_encoded.backward()
+        #self.optimizer_discrim.step()
 
-            
-            if self.vgg_loss == None:
-                g_loss_enc = self.mse_loss(encoded_images, images)
-            else:
-                vgg_on_cov = self.vgg_loss(images)
-                vgg_on_enc = self.vgg_loss(encoded_images)
-                g_loss_enc = self.mse_loss(vgg_on_cov, vgg_on_enc)
-            
-            g_loss_dec = self.message_loss(decoded_messages, messages)
-            g_loss =  self.config.encoder_loss * g_loss_enc + self.config.decoder_loss * g_loss_dec
+        # --------------Train the generator (encoder-decoder) ---------------------
+        self.optimizer_enc_dec.zero_grad()
+        # target label for encoded images should be 'cover', because we want to fool the discriminator
+        #d_on_encoded_for_enc = self.discriminator(encoded_images)
+        #g_loss_adv = self.bce_with_logits_loss(d_on_encoded_for_enc, g_target_label_encoded)
 
-            g_loss.backward()
-            self.optimizer_enc_dec.step()
-            self.scheduler.step()
+        
+        if self.vgg_loss == None:
+            g_loss_enc = self.mse_loss(encoded_images, images)
+        else:
+            vgg_on_cov = self.vgg_loss(images)
+            vgg_on_enc = self.vgg_loss(encoded_images)
+            g_loss_enc = self.mse_loss(vgg_on_cov, vgg_on_enc)
+        
+        g_loss_dec = self.message_loss(decoded_messages, messages)
+        g_loss =  self.config.encoder_loss * g_loss_enc + self.config.decoder_loss * g_loss_dec
+
+        g_loss.backward()
+        self.optimizer_enc_dec.step()
+        self.scheduler.step()
 
         decoded_rounded = decoded_messages.detach().cpu().numpy().round().clip(0, 1)
         bitwise_avg_err = np.sum(np.abs(decoded_rounded - messages.detach().cpu().numpy())) / (

@@ -44,12 +44,15 @@ def main():
     new_run_parser.add_argument('--loss_type', '-l', default='mse', type=str, help='The loss used between cover and waterkmarked image.')
     new_run_parser.add_argument('--opt_type', '-o', default='adam', type=str, help='The loss used between cover and waterkmarked image.')
     new_run_parser.add_argument('--data_len', default=400, type=int, help='Training data lens')
+    new_run_parser.add_argument('--wmdec_path', '-wmdec', required=True, type=str,
+                                 help='path of watermark decoder checkpoint')
     new_run_parser.set_defaults(tensorboard=False)
     new_run_parser.set_defaults(enable_fp16=False)
 
     continue_parser = subparsers.add_parser('continue', help='Continue a previous run')
     continue_parser.add_argument('--folder', '-f', required=True, type=str,
                                  help='Continue from the last checkpoint in this folder.')
+    
     continue_parser.add_argument('--data-dir', '-d', required=False, type=str,
                                  help='The directory where the data is stored. Specify a value only if you want to override the previous value.')
     continue_parser.add_argument('--epochs', '-e', required=False, type=int,
@@ -130,7 +133,7 @@ def main():
 
     noiser = Noiser(noise_config, device)
     model = Hidden(hidden_config, device, noiser, tb_logger,train_options)
-
+    
     if args.command == 'continue':
         # if we are continuing, we have to load the model params
         assert checkpoint is not None
@@ -145,6 +148,8 @@ def main():
     logging.info('\nTraining train_options:\n')
     logging.info(pprint.pformat(vars(train_options)))
 
+    checkpoint, loaded_checkpoint_file_name=utils.load_checkpoint(args.wmdec_path)
+    utils.load_wm_decoder(model, checkpoint)
     train(model, device, hidden_config, train_options, this_run_folder, tb_logger)
 
 
