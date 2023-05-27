@@ -59,13 +59,13 @@ class EncoderDecoder(nn.Module):
 
 
         #to [-1,1] yuv
-        encoded_image=encoded_image*2.0-1.0
-        encoded_image=rgb2yuv_tensor(encoded_image)
+        yuv_encoded_image=encoded_image*2.0-1.0
+        yuv_encoded_image=rgb2yuv_tensor(yuv_encoded_image)
 
         yuv_image=image*2.0-1.0
         yuv_image=rgb2yuv_tensor(yuv_image)
         
-        noised_and_cover = self.noiser([encoded_image, yuv_image])
+        noised_and_cover = self.noiser([yuv_encoded_image, yuv_image])
         noised_image = noised_and_cover[0]
         decoded_message = self.decoder(noised_image)
         return encoded_image, noised_image, decoded_message

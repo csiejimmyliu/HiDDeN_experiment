@@ -73,6 +73,17 @@ def yuv2rgb(image_yuv, image_rgb_out):
     image_rgb_out[:, 2, :, :] = image_yuv[:, 0, :, :].clone() + 1.77200 * image_yuv[:, 1, :, :].clone()
 
 
+def yuv2rgb_tensor(image_yuv):
+
+
+    image_rgb_out=torch.empty_like(image_yuv)
+    """ Transform the image from yuv to rgb """
+    image_rgb_out[:, 0, :, :] = image_yuv[:, 0, :, :].clone() + 1.40200 * image_yuv[:, 2, :, :].clone()
+    image_rgb_out[:, 1, :, :] = image_yuv[:, 0, :, :].clone() + -0.34414 * image_yuv[:, 1, :, :].clone() + -0.71414 * image_yuv[:, 2, :, :].clone()
+    image_rgb_out[:, 2, :, :] = image_yuv[:, 0, :, :].clone() + 1.77200 * image_yuv[:, 1, :, :].clone()
+
+    return image_rgb_out
+
 class JpegCompression(nn.Module):
     def __init__(self, device, yuv_keep_weights = (25, 9, 9)):
         super(JpegCompression, self).__init__()

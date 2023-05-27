@@ -10,7 +10,7 @@ from options import *
 from model.hidden import Hidden
 from average_meter import AverageMeter
 
-
+from noise_layers.jpeg_compression import yuv2rgb_tensor
 def train(model: Hidden,
           device: torch.device,
           hidden_config: HiDDenConfiguration,
@@ -37,7 +37,7 @@ def train(model: Hidden,
         steps_in_epoch = file_count // train_options.batch_size + 1
 
     print_each = 10
-    images_to_save = 8
+    images_to_save = 4
     saved_images_size = (512, 512)
 
     #fix_message = torch.Tensor(np.random.choice([0, 1], ( hidden_config.message_length)))

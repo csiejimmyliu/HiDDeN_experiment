@@ -13,6 +13,9 @@ import torchvision
 from model.lamb import Lamb
 
 import math
+from PerceptualSimilarity.src.loss.loss_provider import LossProvider
+from noise_layers.jpeg_compression import yuv2rgb_tensor
+
 
 class Hidden:
     def __init__(self, configuration: HiDDenConfiguration, device: torch.device, noiser: Noiser, tb_logger,train_options):
@@ -76,7 +79,7 @@ class Hidden:
 
         self.bce_with_logits_loss = nn.BCEWithLogitsLoss().to(device)
         self.mse_loss = nn.MSELoss().to(device)
-        
+        self.perceptual_loss=LossProvider().get_loss_function('watson-vgg', colorspace='RGB', pretrained=True, reduction='sum').to(device)
 
         if configuration.loss_type=="mse":
             self.message_loss=self.mse_loss
@@ -174,10 +177,11 @@ class Hidden:
         # target label for encoded images should be 'cover', because we want to fool the discriminator
         #d_on_encoded_for_enc = self.discriminator(encoded_images)
         #g_loss_adv = self.bce_with_logits_loss(d_on_encoded_for_enc, g_target_label_encoded)
-
+        
         
         if self.vgg_loss == None:
-            g_loss_enc = self.mse_loss(encoded_images, images)
+            g_loss_enc = self.perceptual_loss(encoded_images, images)/batch_size
+            #g_loss_enc = self.mse(encoded_images, images)
         else:
             vgg_on_cov = self.vgg_loss(images)
             vgg_on_enc = self.vgg_loss(encoded_images)
@@ -212,13 +216,7 @@ class Hidden:
         :return: dictionary of error metrics from Encoder, Decoder, and Discriminator on the current batch
         """
         # if TensorboardX logging is enabled, save some of the tensors.
-        if self.tb_logger is not None:
-            #encoder_final = self.encoder_decoder.encoder._modules['final_layer']
-            #self.tb_logger.add_tensor('weights/encoder_out', encoder_final.weight)
-            decoder_final = self.encoder_decoder.decoder._modules['linear']
-            self.tb_logger.add_tensor('weights/decoder_out', decoder_final.weight)
-            #discrim_final = self.discriminator._modules['linear']
-            #self.tb_logger.add_tensor('weights/discrim_out', discrim_final.weight)
+        
 
         images, messages = batch
 
@@ -243,7 +241,8 @@ class Hidden:
             #g_loss_adv = self.bce_with_logits_loss(d_on_encoded_for_enc, g_target_label_encoded)
             
             if self.vgg_loss is None:
-                g_loss_enc = self.mse_loss(encoded_images, images)
+                g_loss_enc = self.perceptual_loss(encoded_images, images)/batch_size
+                #g_loss_enc = self.mse(encoded_images, images)
             else:
                 vgg_on_cov = self.vgg_loss(images)
                 vgg_on_enc = self.vgg_loss(encoded_images)

@@ -121,8 +121,8 @@ def save_images(original_images, watermarked_images, epoch, folder, resize_to=No
     watermarked_images = watermarked_images[:watermarked_images.shape[0], :, :, :].cpu()
 
     # scale values to range [0, 1] from original range of [-1, 1]
-    images = (images + 1) / 2
-    watermarked_images = (watermarked_images + 1) / 2
+    #images = (images + 1) / 2
+    #watermarked_images = (watermarked_images + 1) / 2
 
     if resize_to is not None:
         images = F.interpolate(images, size=resize_to)
@@ -130,8 +130,8 @@ def save_images(original_images, watermarked_images, epoch, folder, resize_to=No
 
     stacked_images = torch.cat([images, watermarked_images], dim=0)
     filename = os.path.join(folder, 'epoch-{}.png'.format(epoch))
-    #torchvision.utils.save_image(stacked_images, filename)
-    save_ycbcr_img(stacked_images, filename)
+    torchvision.utils.save_image(stacked_images, filename)
+    #save_ycbcr_img(stacked_images, filename)
     
 
 def sorted_nicely(l):
