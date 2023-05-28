@@ -3,3 +3,4 @@ dataset/
 dataset_10000/
 old_runs/
 wm_decoder_checkpoint/
+annotations/

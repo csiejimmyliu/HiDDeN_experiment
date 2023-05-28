@@ -37,10 +37,9 @@ def main():
     parser.add_argument('--runs_root', '-r', default=os.path.join('.', 'experiments'), type=str,
                         help='The root folder where data about experiments are stored.')
     parser.add_argument('--batch-size', '-b', default=1, type=int, help='Validation batch size.')
-    '''
+    parser.add_argument('--checkpoint_path', '-c', required=True, type=str, help='The path of wm decoder.')
     parser.add_argument('--noise', nargs='*', action=NoiseArgParser,
             help="Noise layers configuration. Use quotes when specifying configuration, e.g. 'cropout((0.55, 0.6), (0.55, 0.6))'")
-    '''
     args = parser.parse_args()
     
     noise_config = args.noise if args.noise is not None else []
@@ -50,15 +49,15 @@ def main():
     print(f'Run folder: {args.runs_root}')
     options_file = os.path.join(args.runs_root, 'options-and-config.pickle')
     train_options, hidden_config, _ = utils.load_options(options_file)
-    train_options.train_folder = os.path.join(args.data_dir, 'val')
-    train_options.validation_folder = os.path.join(args.data_dir, 'val')
+    train_options.train_folder = os.path.join(args.data_dir, 'train')
+    train_options.validation_folder = os.path.join(args.data_dir, 'train')
     train_options.batch_size = args.batch_size
-    checkpoint, chpt_file_name = utils.load_last_checkpoint(os.path.join(args.runs_root, 'checkpoints'))
+    checkpoint, chpt_file_name = utils.load_checkpoint(args.checkpoint_path)
     print(f'Loaded checkpoint from file {chpt_file_name}')
 
 
     noiser = Noiser(noise_config,device)
-    model = Hidden(hidden_config, device, noiser, tb_logger=None)
+    model = Hidden(hidden_config, device, noiser, tb_logger=None,train_options=train_options)
     utils.model_from_checkpoint(model, checkpoint)
     model.encoder_decoder.eval()
 
@@ -100,7 +99,7 @@ def main():
     whitening_layer.bias=nn.Parameter(b)
     whitening_layer.eval()
 
-    torch.save(whitening_layer,'w_save')
+    torch.save(whitening_layer,args.w_save)
     
 
 
