@@ -130,7 +130,7 @@ def save_images(original_images, watermarked_images, epoch, folder, resize_to=No
 
     stacked_images = torch.cat([images, watermarked_images], dim=0)
     filename = os.path.join(folder, 'epoch-{}.png'.format(epoch))
-    torchvision.utils.save_image(stacked_images, filename)
+    torchvision.utils.save_image(stacked_images, filename,nrow=original_images.shape[0])
     #save_ycbcr_img(stacked_images, filename)
     
 
@@ -163,7 +163,7 @@ def save_checkpoint(model: Hidden, experiment_name: str, epoch: int, checkpoint_
         'epoch': epoch
     }
     torch.save(checkpoint, checkpoint_filename)
-    model.encoder_decoder.encoder.save_pretrained(os.path.join(checkpoint_folder, 'vae_{epoch}'))
+    model.encoder_decoder.encoder.save_pretrained(os.path.join(checkpoint_folder, f'vae_{epoch}'))
     logging.info('Saving checkpoint done.')
 
 

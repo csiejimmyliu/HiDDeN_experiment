@@ -67,6 +67,7 @@ def train(model: Hidden,
                     'Epoch: {}/{} Step: {}/{}'.format(epoch, train_options.number_of_epochs, step, steps_in_epoch))
                 utils.log_progress(training_losses)
                 logging.info('-' * 40)
+                training_losses = defaultdict(AverageMeter)
             step += 1
 
         train_duration = time.time() - epoch_start
@@ -103,3 +104,5 @@ def train(model: Hidden,
         utils.save_checkpoint(model, train_options.experiment_name, epoch, os.path.join(this_run_folder, 'checkpoints'))
         utils.write_losses(os.path.join(this_run_folder, 'validation.csv'), validation_losses, epoch,
                            time.time() - epoch_start)
+    
+    torch.save(model.whitening_layer,'compare.pt')

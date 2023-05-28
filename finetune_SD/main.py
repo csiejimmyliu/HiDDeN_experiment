@@ -46,6 +46,8 @@ def main():
     new_run_parser.add_argument('--data_len', default=400, type=int, help='Training data lens')
     new_run_parser.add_argument('--wmdec_path', '-wmdec', required=True, type=str,
                                  help='path of watermark decoder checkpoint')
+    new_run_parser.add_argument('--w_path', '-w', required=True, type=str,
+                                 help='path of whitening checkpoint')
     new_run_parser.set_defaults(tensorboard=False)
     new_run_parser.set_defaults(enable_fp16=False)
 
@@ -132,7 +134,7 @@ def main():
         tb_logger = None
 
     noiser = Noiser(noise_config, device)
-    model = Hidden(hidden_config, device, noiser, tb_logger,train_options)
+    model = Hidden(hidden_config, device, noiser, tb_logger,train_options,args.w_path)
     
     if args.command == 'continue':
         # if we are continuing, we have to load the model params

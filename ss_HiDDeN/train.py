@@ -58,6 +58,7 @@ def train(model: Hidden,
                     'Epoch: {}/{} Step: {}/{}'.format(epoch, train_options.number_of_epochs, step, steps_in_epoch))
                 utils.log_progress(training_losses)
                 logging.info('-' * 40)
+                training_losses = defaultdict(AverageMeter)
             step += 1
 
         train_duration = time.time() - epoch_start

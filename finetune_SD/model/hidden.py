@@ -15,10 +15,10 @@ from model.lamb import Lamb
 import math
 from PerceptualSimilarity.src.loss.loss_provider import LossProvider
 from noise_layers.jpeg_compression import yuv2rgb_tensor
-
+import torch
 
 class Hidden:
-    def __init__(self, configuration: HiDDenConfiguration, device: torch.device, noiser: Noiser, tb_logger,train_options):
+    def __init__(self, configuration: HiDDenConfiguration, device: torch.device, noiser: Noiser, tb_logger,train_options,w_path):
         """
         :param configuration: Configuration for the net, such as the size of the input image, number of channels in the intermediate layers, etc.
         :param device: torch.device object, CPU or GPU
@@ -50,7 +50,9 @@ class Hidden:
                 #module.eval()
         
 
-        
+        self.whitening_layer=torch.load(w_path).to(device)
+        self.whitening_layer.eval()
+        self.whitening_layer.requires_grad_(False)
         
 
 
@@ -110,6 +112,7 @@ class Hidden:
 
         batch_size = images.shape[0]
         self.encoder_decoder.eval()
+        
         self.encoder_decoder.encoder.decoder.train()
         #self.encoder_decoder.encoder.encoder.requires_grad_(False)
         #self.encoder_decoder.encoder.quant_conv.requires_grad_(False)
@@ -129,7 +132,7 @@ class Hidden:
             # print(module)
             if isinstance(module, nn.Dropout):
                 module.eval()
-                
+        
 
         '''
         for name, param in self.encoder_decoder.encoder.decoder.named_parameters():
@@ -155,6 +158,8 @@ class Hidden:
         
         # train on fake
         encoded_images, noised_images, decoded_messages = self.encoder_decoder(images, messages)
+        #decoded_messages=self.whitening_layer(decoded_messages)/2+0.5
+        decoded_messages=self.whitening_layer(decoded_messages)
         '''
         for name, param in self.encoder_decoder.encoder.encoder.named_parameters():
             if param.requires_grad==True:
@@ -233,7 +238,8 @@ class Hidden:
             #d_loss_on_cover = self.bce_with_logits_loss(d_on_cover, d_target_label_cover)
 
             encoded_images, noised_images, decoded_messages = self.encoder_decoder(images, messages)
-
+            #decoded_messages=self.whitening_layer(decoded_messages)/2+0.5
+            decoded_messages=self.whitening_layer(decoded_messages)
             #d_on_encoded = self.discriminator(encoded_images)
             #d_loss_on_encoded = self.bce_with_logits_loss(d_on_encoded, d_target_label_encoded)
 
