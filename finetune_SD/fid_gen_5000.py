@@ -32,6 +32,8 @@ parser.add_argument('--model_id', '-m',default= "runwayml/stable-diffusion-v1-5"
 
 args = parser.parse_args()
 
+if not os.path.exists(args.save_folder):
+    os.makedirs(args.save_folder)
 
 caps=json.load(open(args.cap_path))
 seeds=json.load(open(args.seeds_path))
