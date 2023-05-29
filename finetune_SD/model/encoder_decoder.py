@@ -5,10 +5,11 @@ from options import HiDDenConfiguration
 from noise_layers.noiser import Noiser
 import torch
 
-from diffusers import StableDiffusionPipeline, DPMSolverMultistepScheduler
+from diffusers import StableDiffusionPipeline, DPMSolverMultistepScheduler,AutoencoderKL
 import torch
 
 from noise_layers.jpeg_compression import rgb2yuv_tensor
+from diffusers.models.vae import DecoderOutput
 
 model_id = "runwayml/stable-diffusion-v1-5"
 
@@ -23,9 +24,9 @@ class EncoderDecoder(nn.Module):
     def __init__(self, config: HiDDenConfiguration, noiser: Noiser):
 
         super(EncoderDecoder, self).__init__()
-        pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float32)
-        pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
-        self.encoder = pipe.vae
+        #pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float32)
+        #pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
+        self.encoder = AutoencoderKL.from_pretrained(model_id, subfolder='vae',torch_dtype=torch.float32)
         self.noiser = noiser
         self.alpha=config.alpha
         self.decoder = Decoder(config)
@@ -50,9 +51,18 @@ class EncoderDecoder(nn.Module):
                 module.eval()
         '''
 
+    
+    def vae_forward(self,vae,sample):
+        x = sample
+        posterior = vae.encode(x).latent_dist
+        z = posterior.mode()
+        dec = vae.decode(z.clone().detach()).sample
+        return DecoderOutput(sample=dec)
+    
     def forward(self, image, message):
         #encoded_image = self.encoder(image, message)
-        watermark_noise=self.encoder(image).sample
+        #watermark_noise=self.encoder(image).sample
+        watermark_noise=self.vae_forward(self.encoder,image).sample
         #watermark_noise=torch.tanh(watermark_noise)
         #encoded_image=image+self.alpha*watermark_noise
         encoded_image=watermark_noise

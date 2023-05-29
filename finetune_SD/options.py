@@ -35,6 +35,7 @@ class HiDDenConfiguration():
                  loss_type:str,
                  opt_type:str,
                  data_len:int,
+                 accu_step,
                  enable_fp16: bool = False):
         self.H = H
         self.W = W
@@ -55,4 +56,5 @@ class HiDDenConfiguration():
         self.loss_type=loss_type
         self.opt_type=opt_type
         self.data_len=data_len
+        self.accu_step=accu_step
 

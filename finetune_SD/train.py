@@ -58,7 +58,7 @@ def train(model: Hidden,
         step = 1
         for image, _ in train_data:
             image = image.to(device)
-            losses, _ = model.train_on_batch([image, message])
+            losses, _ = model.train_on_batch([image, message,step])
 
             for name, loss in losses.items():
                 training_losses[name].update(loss)

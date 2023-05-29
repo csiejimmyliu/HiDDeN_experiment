@@ -29,6 +29,8 @@ def main():
 
     new_run_parser.add_argument('--size', '-s', default=256, type=int,
                                 help='The size of the images (images are square so this is height and width).')
+    new_run_parser.add_argument('--accu_step', '-accu', default=1, type=int,
+                                help='Accumulate steps.')
     new_run_parser.add_argument('--message', '-m', default=48, type=int, help='The length in bits of the watermark.')
     new_run_parser.add_argument('--continue-from-folder', '-c', default='', type=str,
                                 help='The folder from where to continue a previous run. Leave blank if you are starting a new experiment.')
@@ -48,6 +50,7 @@ def main():
                                  help='path of watermark decoder checkpoint')
     new_run_parser.add_argument('--w_path', '-w', required=True, type=str,
                                  help='path of whitening checkpoint')
+    
     new_run_parser.set_defaults(tensorboard=False)
     new_run_parser.set_defaults(enable_fp16=False)
 
@@ -109,7 +112,8 @@ def main():
                                             alpha=0.3,
                                             loss_type=args.loss_type,
                                             opt_type=args.opt_type,
-                                            data_len=args.data_len
+                                            data_len=args.data_len,
+                                            accu_step=args.accu_step
                                             )
 
         this_run_folder = utils.create_folder_for_run(train_options.runs_folder, args.name)

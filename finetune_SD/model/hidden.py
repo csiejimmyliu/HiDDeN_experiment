@@ -26,10 +26,11 @@ class Hidden:
         :param tb_logger: Optional TensorboardX logger object, if specified -- enables Tensorboard logging
         """
         super(Hidden, self).__init__()
-        warm_up_iter = int(train_options.number_of_epochs*configuration.data_len/(float(train_options.batch_size)*5.0))
+        self.accu_step=configuration.accu_step
+        warm_up_iter = int(train_options.number_of_epochs*configuration.data_len/(float(train_options.batch_size*self.accu_step)*5.0))
         lr_max = 1e-4
         lr_min = 1e-6
-        T_max=int(train_options.number_of_epochs*configuration.data_len/float(train_options.batch_size))
+        T_max=int(train_options.number_of_epochs*configuration.data_len/float(train_options.batch_size*self.accu_step))
         self.encoder_decoder = EncoderDecoder(configuration, noiser).to(device)
         #self.discriminator = Discriminator(configuration).to(device)
         
@@ -54,7 +55,7 @@ class Hidden:
         self.whitening_layer.eval()
         self.whitening_layer.requires_grad_(False)
         
-
+        
 
 
         if configuration.opt_type=="adam":
@@ -101,6 +102,7 @@ class Hidden:
             #discrim_final = self.discriminator._modules['linear']
             #discrim_final.weight.register_hook(tb_logger.grad_hook_by_name('grads/discrim_out'))
 
+        self.optimizer_enc_dec.zero_grad()
 
     def train_on_batch(self, batch: list):
         """
@@ -108,7 +110,7 @@ class Hidden:
         :param batch: batch of training data, in the form [images, messages]
         :return: dictionary of error metrics from Encoder, Decoder, and Discriminator on the current batch
         """
-        images, messages = batch
+        images, messages,step = batch
 
         batch_size = images.shape[0]
         self.encoder_decoder.eval()
@@ -178,7 +180,7 @@ class Hidden:
         #self.optimizer_discrim.step()
 
         # --------------Train the generator (encoder-decoder) ---------------------
-        self.optimizer_enc_dec.zero_grad()
+        
         # target label for encoded images should be 'cover', because we want to fool the discriminator
         #d_on_encoded_for_enc = self.discriminator(encoded_images)
         #g_loss_adv = self.bce_with_logits_loss(d_on_encoded_for_enc, g_target_label_encoded)
@@ -195,18 +197,22 @@ class Hidden:
         g_loss_dec = self.message_loss(decoded_messages, messages)
         g_loss =  self.config.encoder_loss * g_loss_enc + self.config.decoder_loss * g_loss_dec
 
-        g_loss.backward()
-        self.optimizer_enc_dec.step()
-        self.scheduler.step()
+        (g_loss/self.accu_step).backward()
+
+        if step%self.accu_step==0:
+            self.optimizer_enc_dec.step()
+            self.optimizer_enc_dec.zero_grad()
+            self.scheduler.step()
+        
 
         decoded_rounded = decoded_messages.detach().cpu().numpy().round().clip(0, 1)
         bitwise_avg_err = np.sum(np.abs(decoded_rounded - messages.detach().cpu().numpy())) / (
                 batch_size * messages.shape[1])
 
         losses = {
-            'loss           ': g_loss.item(),
-            'encoder_mse    ': g_loss_enc.item(),
-            'dec_mse        ': g_loss_dec.item(),
+            'loss           ': g_loss.detach().item(),
+            'encoder_mse    ': g_loss_enc.detach().item(),
+            'dec_mse        ': g_loss_dec.detach().item(),
             'bitwise-error  ': bitwise_avg_err,
             #'adversarial_bce': g_loss_adv.item(),
             #'discr_cover_bce': d_loss_on_cover.item(),
@@ -239,7 +245,7 @@ class Hidden:
 
             encoded_images, noised_images, decoded_messages = self.encoder_decoder(images, messages)
             #decoded_messages=self.whitening_layer(decoded_messages)/2+0.5
-            decoded_messages=self.whitening_layer(decoded_messages)
+            #decoded_messages=self.whitening_layer(decoded_messages)
             #d_on_encoded = self.discriminator(encoded_images)
             #d_loss_on_encoded = self.bce_with_logits_loss(d_on_encoded, d_target_label_encoded)
 
@@ -262,9 +268,9 @@ class Hidden:
                 batch_size * messages.shape[1])
 
         losses = {
-            'loss           ': g_loss.item(),
-            'encoder_mse    ': g_loss_enc.item(),
-            'dec_mse        ': g_loss_dec.item(),
+            'loss           ': g_loss.detach().item(),
+            'encoder_mse    ': g_loss_enc.detach().item(),
+            'dec_mse        ': g_loss_dec.detach().item(),
             'bitwise-error  ': bitwise_avg_err,
             #'adversarial_bce': g_loss_adv.item(),
             #'discr_cover_bce': d_loss_on_cover.item(),
