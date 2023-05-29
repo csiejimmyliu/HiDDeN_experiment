@@ -1,7 +1,7 @@
 import torch.nn as nn
 from options import HiDDenConfiguration
 from model.conv_bn_relu import ConvBNRelu
-
+import torch
 
 class Decoder(nn.Module):
     """

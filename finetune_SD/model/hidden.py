@@ -17,6 +17,18 @@ from PerceptualSimilarity.src.loss.loss_provider import LossProvider
 from noise_layers.jpeg_compression import yuv2rgb_tensor
 import torch
 
+
+def combine_linear_layer(l1,l2):
+    w1=l1.weight
+    b1=l1.bias
+    w2=l2.weight
+    b2=l2.bias
+
+    w3=w2@w1
+    b3=w2@b1+b2
+
+    return nn.Parameter(w3),nn.Parameter(b3)
+
 class Hidden:
     def __init__(self, configuration: HiDDenConfiguration, device: torch.device, noiser: Noiser, tb_logger,train_options,w_path):
         """
@@ -55,7 +67,10 @@ class Hidden:
         self.whitening_layer.eval()
         self.whitening_layer.requires_grad_(False)
         
+
+        #w_temp,b_temp=combine_linear_layer(self.encoder_decoder.decoder.linear,self.whitening_layer)
         
+
 
 
         if configuration.opt_type=="adam":
@@ -161,7 +176,7 @@ class Hidden:
         # train on fake
         encoded_images, noised_images, decoded_messages = self.encoder_decoder(images, messages)
         #decoded_messages=self.whitening_layer(decoded_messages)/2+0.5
-        decoded_messages=self.whitening_layer(decoded_messages)
+        #decoded_messages=self.whitening_layer(decoded_messages)
         '''
         for name, param in self.encoder_decoder.encoder.encoder.named_parameters():
             if param.requires_grad==True:
