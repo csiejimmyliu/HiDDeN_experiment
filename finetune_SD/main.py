@@ -13,7 +13,16 @@ from noise_layers.noiser import Noiser
 from noise_argparser import NoiseArgParser
 
 from train import train
+import random
+import numpy as np
 
+def fix_deex(seed):
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)
+    torch.backends.cudnn.enabled=False
+    torch.backends.cudnn.deterministic=True
 
 def main():
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -29,8 +38,8 @@ def main():
 
     new_run_parser.add_argument('--size', '-s', default=256, type=int,
                                 help='The size of the images (images are square so this is height and width).')
-    new_run_parser.add_argument('--accu_step', '-accu', default=1, type=int,
-                                help='Accumulate steps.')
+    new_run_parser.add_argument('--accu_step', '-accu', default=1, type=int,help='Accumulate steps.')
+    new_run_parser.add_argument('--seed', default=870110, type=int,help='Random seed.')
     new_run_parser.add_argument('--message', '-m', default=48, type=int, help='The length in bits of the watermark.')
     new_run_parser.add_argument('--continue-from-folder', '-c', default='', type=str,
                                 help='The folder from where to continue a previous run. Leave blank if you are starting a new experiment.')
@@ -65,6 +74,8 @@ def main():
     # continue_parser.add_argument('--tensorboard', action='store_true',
     #                             help='Override the previous setting regarding tensorboard logging.')
     args = parent_parser.parse_args()
+
+    fix_deex(args.seed)
     checkpoint = None
     loaded_checkpoint_file_name = None
 
