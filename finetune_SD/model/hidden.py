@@ -177,6 +177,7 @@ class Hidden:
         encoded_images, noised_images, decoded_messages = self.encoder_decoder(images, messages)
         #decoded_messages=self.whitening_layer(decoded_messages)/2+0.5
         decoded_messages=self.whitening_layer(decoded_messages)
+        #decoded_messages=(decoded_messages-0.5)/6.+0.5
         '''
         for name, param in self.encoder_decoder.encoder.encoder.named_parameters():
             if param.requires_grad==True:
@@ -261,6 +262,7 @@ class Hidden:
             encoded_images, noised_images, decoded_messages = self.encoder_decoder(images, messages)
             #decoded_messages=self.whitening_layer(decoded_messages)/2+0.5
             decoded_messages=self.whitening_layer(decoded_messages)
+            #decoded_messages=(decoded_messages-0.5)/6.+0.5
             #d_on_encoded = self.discriminator(encoded_images)
             #d_loss_on_encoded = self.bce_with_logits_loss(d_on_encoded, d_target_label_encoded)
 

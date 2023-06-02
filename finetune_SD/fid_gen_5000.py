@@ -18,7 +18,15 @@ import torch.nn as nn
 import numpy as np
 import matplotlib.pyplot as plt
 import json
+import random
 
+def fix_deex(seed):
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)
+    torch.backends.cudnn.enabled=False
+    torch.backends.cudnn.deterministic=True
 
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 parser = argparse.ArgumentParser(description='Generate 5000 imgaes by diffusino model for fid calculation.')
@@ -29,8 +37,10 @@ parser.add_argument('--seeds_path', '-seed',default='../5000_seeds.json' , type=
 parser.add_argument('--batch_size', '-b',required=True , type=int,help='Batch size')
 parser.add_argument('--size', '-s',default= 512, type=int,help='Generated image size')
 parser.add_argument('--model_id', '-m',default= "runwayml/stable-diffusion-v1-5", type=str,help='Diffusion model path')
+parser.add_argument('--seed', default=870110, type=int,help='Random seed.')
 
 args = parser.parse_args()
+
 
 if not os.path.exists(args.save_folder):
     os.makedirs(args.save_folder)
@@ -49,6 +59,9 @@ else:
 
 def dummy(images, **kwargs):
     return images, False
+
+#pipe.enable_vae_slicing()
+
 pipe.safety_checker = dummy
 pipe=pipe.to(device)
 generator = torch.Generator(device=device)
