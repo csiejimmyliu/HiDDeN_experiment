@@ -24,8 +24,8 @@ class Hidden:
         """
         super(Hidden, self).__init__()
         warm_up_iter = int(train_options.number_of_epochs*118320/(float(train_options.batch_size)*60.0))
-        lr_max = 1e-2
-        lr_min = 1e-6
+        lr_max = 1.75*1e-3
+        lr_min = 1e-4
         T_max=int(train_options.number_of_epochs*118320/float(train_options.batch_size))
         self.encoder_decoder = EncoderDecoder(configuration, noiser).to(device)
         #self.discriminator = Discriminator(configuration).to(device)

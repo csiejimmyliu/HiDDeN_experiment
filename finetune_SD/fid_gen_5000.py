@@ -18,15 +18,7 @@ import torch.nn as nn
 import numpy as np
 import matplotlib.pyplot as plt
 import json
-import random
-
-def fix_deex(seed):
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    np.random.seed(seed)
-    random.seed(seed)
-    torch.backends.cudnn.enabled=False
-    torch.backends.cudnn.deterministic=True
+from tqdm import tqdm
 
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 parser = argparse.ArgumentParser(description='Generate 5000 imgaes by diffusino model for fid calculation.')
@@ -37,10 +29,9 @@ parser.add_argument('--seeds_path', '-seed',default='../5000_seeds.json' , type=
 parser.add_argument('--batch_size', '-b',required=True , type=int,help='Batch size')
 parser.add_argument('--size', '-s',default= 512, type=int,help='Generated image size')
 parser.add_argument('--model_id', '-m',default= "runwayml/stable-diffusion-v1-5", type=str,help='Diffusion model path')
-parser.add_argument('--seed', default=870110, type=int,help='Random seed.')
+parser.add_argument('--helf', action='store_true',help='Generate helf of image')
 
 args = parser.parse_args()
-
 
 if not os.path.exists(args.save_folder):
     os.makedirs(args.save_folder)
@@ -59,15 +50,16 @@ else:
 
 def dummy(images, **kwargs):
     return images, False
-
-#pipe.enable_vae_slicing()
-
 pipe.safety_checker = dummy
 pipe=pipe.to(device)
 generator = torch.Generator(device=device)
 
+pipe.set_progress_bar_config(disable=True)
 
-for i in range(int(len(seeds)/args.batch_size)):
+for i in tqdm(range(int(len(seeds)/args.batch_size))):
+    if args.helf:
+        if i<=int(len(seeds)/args.batch_size)/2:
+            continue
     output=pipe(prompt=caps[i*args.batch_size:i*args.batch_size+args.batch_size],height=args.size,width=args.size,guidance_scale=3.0,generator = [generator.manual_seed(gen_seed) for gen_seed in seeds[i*args.batch_size:i*args.batch_size+args.batch_size]])
     for j in range(args.batch_size):
         output.images[j].save(os.path.join(args.save_folder,f'{i*args.batch_size+j}.png'))

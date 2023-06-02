@@ -94,6 +94,9 @@ def main():
     b=-(L_matrix@V.T).to(torch.float)@miu
     w=(L_matrix@V.T).to(torch.float)
 
+    b=(b+1.)/2.
+    w=w/2.
+
     whitening_layer=nn.Linear(hidden_config.message_length,hidden_config.message_length)
     whitening_layer.weight=nn.Parameter(w)
     whitening_layer.bias=nn.Parameter(b)

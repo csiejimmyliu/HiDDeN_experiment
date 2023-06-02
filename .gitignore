@@ -6,3 +6,4 @@ wm_decoder_checkpoint/
 annotations/
 gen_images/
 resize_coco_val/
+whiten_checkpoint/

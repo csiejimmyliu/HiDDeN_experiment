@@ -16,13 +16,7 @@ from train import train
 import random
 import numpy as np
 
-def fix_deex(seed):
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    np.random.seed(seed)
-    random.seed(seed)
-    torch.backends.cudnn.enabled=False
-    torch.backends.cudnn.deterministic=True
+
 
 def main():
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -66,7 +60,6 @@ def main():
     # continue_parser.add_argument('--tensorboard', action='store_true',
     #                             help='Override the previous setting regarding tensorboard logging.')
     args = parent_parser.parse_args()
-    fix_deex(args.seed)
     checkpoint = None
     loaded_checkpoint_file_name = None
 
