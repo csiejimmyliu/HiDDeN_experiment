@@ -26,7 +26,7 @@ parser.add_argument('--vae_path', '-v', type=str,help='Paht of watermarked vae.'
 parser.add_argument('--save_folder', '-sf', required=True, type=str,help='The directory to save images.')
 parser.add_argument('--cap_path', '-c',default='../cap_list.json' , type=str,help='Paht of 5000 captions.')
 parser.add_argument('--seeds_path', '-seed',default='../5000_seeds.json' , type=str,help='Paht of 5000 seeds.')
-parser.add_argument('--batch_size', '-b',required=True , type=int,help='Batch size')
+parser.add_argument('--batch_size', '-b',default= 4, type=int,help='Batch size')
 parser.add_argument('--size', '-s',default= 512, type=int,help='Generated image size')
 parser.add_argument('--model_id', '-m',default= "runwayml/stable-diffusion-v1-5", type=str,help='Diffusion model path')
 parser.add_argument('--helf', action='store_true',help='Generate helf of image')
@@ -44,6 +44,7 @@ pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
 if args.vae_path==None:
     pipe.vae=AutoencoderKL.from_pretrained("runwayml/stable-diffusion-v1-5",subfolder='vae')
 else:
+    print('load vae')
     tmpe_vae=AutoencoderKL.from_pretrained(args.vae_path)
     pipe.vae.decoder=tmpe_vae.decoder
     pipe.vae.post_quant_conv=tmpe_vae.post_quant_conv

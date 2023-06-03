@@ -7,3 +7,4 @@ annotations/
 gen_images/
 resize_coco_val/
 whiten_checkpoint/
+val_result/

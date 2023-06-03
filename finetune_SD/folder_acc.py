@@ -19,7 +19,10 @@ from noise_layers.jpeg_compression import *
 from PIL import Image,ImageEnhance 
 from torchvision import datasets
 from augly.image import functional as aug_functional
-
+import json
+from pathlib import Path
+import csv
+import math
 
 parser = argparse.ArgumentParser(description='Test folder')
 parser.add_argument('--wm_path', '-wm', required=True, type=str,help='The directory where the data is stored.')
@@ -32,12 +35,21 @@ parser.add_argument('--transform_factor', '-tf', default=2.0, type=float, help='
 args = parser.parse_args()
 
 
-'''
-sharpness_ehc = ImageEnhance.Sharpness()
-brightness_ehc = ImageEnhance.Brightness()
-color_ehc = ImageEnhance.Color()
-contrast_ehc = ImageEnhance.Contrast()
-'''
+folder_name=Path(os.path.join(args.folder)).name
+root='../val_result'
+
+if args.transform==None:
+    exp_name='identity'
+else:
+    exp_name=f'{args.transform}_{args.transform_factor}'
+
+bit_acc_filename='bit_acc.csv'
+
+bit_folder=os.path.join(root,folder_name,'bit_folder',exp_name)
+
+if not os.path.exists(bit_folder):
+    os.makedirs(bit_folder)
+
 
 
 class ImageFolderEnhance(datasets.ImageFolder):
@@ -62,7 +74,7 @@ class ImageFolderEnhance(datasets.ImageFolder):
             sample=ImageEnhance.Sharpness(sample).enhance(args.transform_factor)
         elif args.transform == 'brightness':
             sample=ImageEnhance.Brightness(sample).enhance(args.transform_factor)
-        elif args.transform == 'color':
+        elif args.transform == 'saturation':
             sample=ImageEnhance.Color(sample).enhance(args.transform_factor)
         elif args.transform == 'contrast':
             sample=ImageEnhance.Contrast(sample).enhance(args.transform_factor)
@@ -124,14 +136,12 @@ whitening_layer=torch.load(whitening_layer_path).to(device)
 whitening_layer.eval()
 
 
-crop_size=164
-
 noise_transform=T.CenterCrop(512)
 
 if args.transform == 'crop':
-    noise_transform=T.CenterCrop(512)
+    noise_transform=T.CenterCrop(int(512*math.sqrt(args.transform_factor)))
 elif args.transform == 'resize':
-    resize=T.Resize()
+    noise_transform=T.Resize(int(512*math.sqrt(args.transform_factor)))
 
 open_transform=T.Compose([
         
@@ -148,12 +158,11 @@ data_loader=torch.utils.data.DataLoader(dataset, batch_size=batch_size,shuffle=F
 
 acc_list=[]
 wm_decoder.eval()
-
+bit_list=[]
 
 with torch.no_grad():
     for image, _ in tqdm(data_loader):
         image = image.to(device)
-
         image=rgb2yuv_tensor(image)
         decoded_messages=wm_decoder(image)
         decoded_messages=whitening_layer(decoded_messages)
@@ -163,7 +172,17 @@ with torch.no_grad():
         bitwise_avg_err = np.sum(np.abs(decoded_rounded - message.detach().cpu().numpy())) / (batch_size * message.shape[1])
 
         acc_list.append(bitwise_avg_err)
-
+        bit_list.append(decoded_rounded)
 
 np_acc=np.array(acc_list)
 print(np_acc.mean())
+
+with open(os.path.join(root,folder_name,bit_acc_filename), 'a') as file:
+    writer = csv.writer(file)
+    writer.writerow([exp_name,np.around(1-np_acc.mean(), 5)])
+
+
+bit_list=np.concatenate(bit_list,0)
+bit_json=json.dumps(bit_list.tolist())
+with open(os.path.join(bit_folder,'bit.json'), "w") as outfile:
+    outfile.write(bit_json)
